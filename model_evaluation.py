@@ -10,14 +10,14 @@ import itertools
 
 # load best saved checkpoint
 
-device = torch.device(Infra_Config.DEVICE)
-best_model = torch.load(Infra_Config.WEIGHT_PATH)
+device = torch.device(Final_Config.DEVICE)
+best_model = torch.load(Final_Config.WEIGHT_PATH)
 best_model.to(device)
 
 # Create test dataset for model evaluation and prediction visualization
 
-x_test_dir = Infra_Config.INPUT_IMG_DIR + '/test'
-y_test_dir = Infra_Config.INPUT_MASK_DIR + '/test'
+x_test_dir = Final_Config.INPUT_IMG_DIR + '/test'
+y_test_dir = Final_Config.INPUT_MASK_DIR + '/test'
 
 test_dataset = Dataset(
     x_test_dir, 
@@ -36,9 +36,9 @@ test_dataset_vis = Dataset(
 
 test_epoch = smp.utils.train.ValidEpoch(
     model=best_model,
-    loss=Infra_Config.LOSS,
-    metrics=Infra_Config.METRICS,
-    device=Infra_Config.DEVICE,
+    loss=Final_Config.LOSS,
+    metrics=Final_Config.METRICS,
+    device=Final_Config.DEVICE,
 )
 
 logs = test_epoch.run(test_dataloader)
@@ -99,7 +99,7 @@ for i, id_ in tqdm(enumerate(test_dataset), total = len(test_dataset)):
     gt_mask = gt_mask.squeeze()
     labels[i] = gt_mask
     
-    x_tensor = torch.from_numpy(image).to(Infra_Config.DEVICE).unsqueeze(0)
+    x_tensor = torch.from_numpy(image).to(Final_Config.DEVICE).unsqueeze(0)
     pr_mask = best_model.predict(x_tensor)
     pr_mask = (pr_mask.squeeze().cpu().numpy().round())
     preds[i] = pr_mask
@@ -143,7 +143,7 @@ def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix'
     plt.tight_layout()
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
-    plt.savefig(Infra_Config.TEST_OUTPUT_DIR + '/confusion_matrix' + '.png', dpi = 1000, bbox_inches = "tight")
+    plt.savefig(Final_Config.TEST_OUTPUT_DIR + '/confusion_matrix' + '.png', dpi = 1000, bbox_inches = "tight")
 
 
 # Plot confusion matrix
