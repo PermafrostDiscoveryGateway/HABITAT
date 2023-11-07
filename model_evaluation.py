@@ -22,7 +22,7 @@ y_test_dir = Final_Config.INPUT_MASK_DIR + '/test'
 test_dataset = Dataset(
     x_test_dir, 
     y_test_dir, 
-    preprocessing=get_preprocessing(Infra_Config.PREPROCESS),
+    preprocessing=get_preprocessing(Final_Config.PREPROCESS),
 )
 
 test_dataloader = DataLoader(test_dataset)
@@ -90,8 +90,8 @@ for i, id_ in tqdm(enumerate(test_dataset), total=len(test_dataset)):
 # in arrays to construct confusion matrix.
 
 
-labels = np.empty([280, Infra_Config.CLASSES, Infra_Config.SIZE, Infra_Config.SIZE])
-preds = np.empty([280, Infra_Config.CLASSES, Infra_Config.SIZE, Infra_Config.SIZE])
+labels = np.empty([280, Final_Config.CLASSES, Final_Config.SIZE, Final_Config.SIZE])
+preds = np.empty([280, Final_Config.CLASSES, Final_Config.SIZE, Final_Config.SIZE])
 for i, id_ in tqdm(enumerate(test_dataset), total = len(test_dataset)):
     
     image, gt_mask = test_dataset[i]
