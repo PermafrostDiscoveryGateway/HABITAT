@@ -3,9 +3,9 @@ from model_evaluation import *
 from model_train import *
 
 # Train the model
-# print("Starting model training...")
-# model_train()
-# print("Model training complete.")
+print("Starting model training...")
+model_train()
+print("Model training complete.")
 
 # Evaluate the trained model
 print("Starting model evaluation...")
