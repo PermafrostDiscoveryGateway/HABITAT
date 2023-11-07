@@ -82,7 +82,7 @@ for i, id_ in tqdm(enumerate(test_dataset), total=len(test_dataset)):
        predicted_mask=np.argmax(predicted_mask, axis=2)
        )
 
-    name = Infra_Config.TEST_OUTPUT_DIR + '/test_preds/' + str(i) + '.png'
+    name = Final_Config.TEST_OUTPUT_DIR + '/test_preds/' + str(i) + '.png'
     cv2.imwrite(name, np.argmax(predicted_mask, axis=2))
 
 
