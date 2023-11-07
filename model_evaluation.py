@@ -1,4 +1,4 @@
-from model_config import *
+from final_model_config import *
 import matplotlib.pyplot as plt
 from sklearn.metrics import *
 from torch.utils.data import DataLoader
