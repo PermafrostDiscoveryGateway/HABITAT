@@ -26,7 +26,7 @@ with open(job_file,"w") as fh:
     fh.writelines("#SBATCH --partition=gpuA100x4\n") 
     fh.writelines("#SBATCH --gres=gpu:1\n")
     fh.writelines("#SBATCH --account=bbou-delta-gpu\n")
-    fh.writelines("#SBATCH --time=00:10:00\n")
+    fh.writelines("#SBATCH --time=02:00:00\n")
     fh.writelines("### GPU options ###\n")
     fh.writelines("#SBATCH --gpus-per-node=1\n")
     fh.writelines("##SBATCH --gpu-bind=verbose\n")
