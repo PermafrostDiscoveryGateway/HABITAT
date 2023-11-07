@@ -6,12 +6,12 @@ def mkdir_p(dir):
     if not os.path.exists(dir):
         os.mkdir(dir)
 
-file_path = Operational_Config.INPUT_IMG_DIR+ "/*.tif"
+file_path = Operational_Config.INPUT_SCENE_DIR+ "/*.tif"
 
 files = sorted(glob.glob(file_path))
 
-start = 12
-end = 13
+start = 0
+end = 80
 selected_files = files[start:end]
 
 
@@ -37,6 +37,7 @@ for idx,name in enumerate(file_names):
         fh.writelines("#SBATCH --nodes=1\n")
         fh.writelines("#SBATCH --ntasks-per-node=1\n")
         fh.writelines("#SBATCH --cpus-per-task=16\n")
+        fh.writelines("#SBATCH --partition=gpuA100x4\n") 
         fh.writelines("#SBATCH --gres=gpu:1\n")
         fh.writelines("#SBATCH --account=bbou-delta-gpu\n")
         fh.writelines("#SBATCH --time=00:40:00\n")

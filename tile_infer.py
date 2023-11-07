@@ -42,7 +42,7 @@ def tile_image(input_img_name):
 def infer_image(input_img_name):
 
     # Path to the input GeoTIFF satellite image
-    input_img_path = os.path.join(Operational_Config.INPUT_IMG_DIR, input_img_name)
+    input_img_path = os.path.join(Operational_Config.INPUT_SCENE_DIR, input_img_name)
 
     # Split the image into tiles
     image_tiles, skipped_indices = tile_image(input_img_path)
@@ -51,7 +51,7 @@ def infer_image(input_img_name):
     dataset = InferDataset(image_tiles, preprocessing=get_preprocessing_test(Operational_Config.PREPROCESS))
 
     # Load the best saved checkpoint
-    best_model = torch.load(Operational_Config.WEIGHT_PATH)
+    best_model = torch.load(Operational_Config.WEIGHT_DIR)
 
     # Move the model to the GPU
     best_model = best_model.to('cuda')

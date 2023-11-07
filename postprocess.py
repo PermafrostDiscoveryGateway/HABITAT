@@ -10,7 +10,7 @@ import geopandas as gpd
 def stitch_preds(input_img_name, predictions, skipped_indices):
 
     # Path to the input GeoTIFF satellite image
-    input_img_path = os.path.join(Operational_Config.INPUT_IMG_DIR, input_img_name)
+    input_img_path = os.path.join(Operational_Config.INPUT_SCENE_DIR, input_img_name)
 
     # Load the full image using tifffile
     image = tiff.imread(input_img_path)
@@ -64,7 +64,7 @@ def stitch_preds(input_img_name, predictions, skipped_indices):
 def georeference(input_img_name):
 
     # Path to the input GeoTIFF satellite image
-    input_img_path = os.path.join(Operational_Config.INPUT_IMG_DIR, input_img_name)
+    input_img_path = os.path.join(Operational_Config.INPUT_SCENE_DIR, input_img_name)
 
     # Define path to save georeferenced raster
     # Get filename of input image to save new output

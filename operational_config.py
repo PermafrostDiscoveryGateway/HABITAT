@@ -7,16 +7,16 @@ import albumentations as albu
 class Operational_Config(object):
 
     # Give the configuration a distinct name related to the experiment
-    NAME = 'ResNet50-UNet++'
+    NAME = 'ResNet50-UNet++_allSites_duplicateTanks'
 
     # Set paths to data
 
     ROOT_DIR = r'/scratch/bbou/eliasm1'
     WORKER_ROOT =  ROOT_DIR + r'/data/'
 
-    INPUT_IMG_DIR = WORKER_ROOT + r'img_scenes/Alaska'
-    OUTPUT_DIR = ROOT_DIR + r'/output'
-    WEIGHT_PATH = ROOT_DIR + r'/model_weights/' + NAME + '_allSites_duplicateTanks.pth'
+    INPUT_SCENE_DIR = ROOT_DIR + r'/alaska_scenes/prudhoe_bay'
+    OUTPUT_DIR = ROOT_DIR + r'/inference_output'
+    WEIGHT_DIR = ROOT_DIR + r'/model_weights/' + NAME + '.pth'
 
     # Configure model training
 
