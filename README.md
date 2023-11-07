@@ -55,8 +55,8 @@ class Final_Config(object):
     INPUT_IMG_DIR = WORKER_ROOT + r'/256x256/imgs'
     INPUT_MASK_DIR = WORKER_ROOT + r'/256x256/masks'
     TEST_OUTPUT_DIR = ROOT_DIR + r'/test_output'
-    PLOT_PATH = ROOT_DIR + r'/plots/' + NAME + '_allSites_duplicateTanks'
-    WEIGHT_PATH = ROOT_DIR + r'/model_weights/' + NAME + '_allSites_duplicateTanks'
+    PLOT_DIR = ROOT_DIR + r'/plots/' + NAME + '_allSites_duplicateTanks'
+    WEIGHT_DIR = ROOT_DIR + r'/model_weights/' + NAME + '_allSites_duplicateTanks'
 ```
 INPUT_IMG_DIR and INPUT_MASK_DIR should match eachother, like in the following example:
 
