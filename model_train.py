@@ -8,6 +8,7 @@ import torch
 from torch.utils.data import DataLoader
 import segmentation_models_pytorch as smp
 from utils import *
+from segmentation_models_pytorch import utils
 
 def model_train():
 
@@ -61,7 +62,7 @@ def model_train():
 
     # Create epoch runners to iterating over dataloader`s samples.
 
-    train_epoch = smp.utils.train.TrainEpoch(
+    train_epoch = utils.train.TrainEpoch(
         model, 
         loss=Final_Config.LOSS, 
         metrics=Final_Config.METRICS, 
@@ -70,7 +71,7 @@ def model_train():
         verbose=True,
     )
 
-    valid_epoch = smp.utils.train.ValidEpoch(
+    valid_epoch = utils.train.ValidEpoch(
         model, 
         loss=Final_Config.LOSS, 
         metrics=Final_Config.METRICS, 
@@ -102,11 +103,11 @@ def model_train():
         train_acc.append(train_logs['fscore'])
         val_acc.append(val_logs['fscore'])
 
-        # Print and log focal loss   
-        print(train_logs['FocalLoss'])
-        print(val_logs['FocalLoss'])
-        train_loss.append(train_logs['FocalLoss'])
-        val_loss.append(val_logs['FocalLoss'])
+        # Print and log loss   
+        print(train_logs['CE_Dice'])
+        print(val_logs['CE_Dice'])
+        train_loss.append(train_logs['CE_Dice'])
+        val_loss.append(val_logs['CE_Dice'])
         
         # do something (save model, change lr, etc.)
         if max_score < val_logs['fscore']:

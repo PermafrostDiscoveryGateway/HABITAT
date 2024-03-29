@@ -5,8 +5,14 @@ from torch.utils.data import DataLoader
 from dataloader import *
 from tqdm import tqdm
 import itertools
+from segmentation_models_pytorch import utils
 
 def model_evaluation():
+
+    out_dir = Final_Config.TEST_OUTPUT_DIR + Final_Config.NAME
+    os.makedirs(out_dir, exist_ok=True)
+    pred_dir = out_dir + '/evaluation_results'
+    os.makedirs(pred_dir, exist_ok=True)
 
     # Evaluation and Visualization
 
@@ -26,7 +32,7 @@ def model_evaluation():
         preprocessing=get_preprocessing(Final_Config.PREPROCESS),
     )
 
-    test_dataloader = DataLoader(test_dataset)
+    # test_dataloader = DataLoader(test_dataset)
 
     test_dataset_vis = Dataset(
         x_test_dir,
@@ -35,14 +41,14 @@ def model_evaluation():
 
     # Evaluate model on test dataset
 
-    test_epoch = smp.utils.train.ValidEpoch(
+    test_epoch = utils.train.ValidEpoch(
         model=best_model,
         loss=Final_Config.LOSS,
         metrics=Final_Config.METRICS,
         device=Final_Config.DEVICE,
     )
 
-    logs = test_epoch.run(test_dataloader)
+    # logs = test_epoch.run(test_dataloader)
 
     # Create function to visualize predictions
 
@@ -64,9 +70,10 @@ def model_evaluation():
 
 
     for i, id_ in tqdm(enumerate(test_dataset), total=len(test_dataset)):
-        
-        image_vis = test_dataset_vis[i][0].astype('float')
-        image_vis = image_vis/65535
+
+        image_vis = (test_dataset_vis[i][0]).astype(np.uint8)
+        image_vis = cv2.cvtColor(image_vis, cv2.COLOR_BGR2RGB)
+        image_vis = image_vis/255
         image, gt_mask = test_dataset[i]
         
         gt_mask = gt_mask.squeeze()
@@ -83,8 +90,16 @@ def model_evaluation():
         predicted_mask=np.argmax(predicted_mask, axis=2)
         )
 
-        name = Final_Config.TEST_OUTPUT_DIR + '/test_preds/' + str(i) + '.png'
-        cv2.imwrite(name, np.argmax(predicted_mask, axis=2))
+        # visualize(
+        # image=image_vis,
+        # ground_truth_mask=gt_mask,
+        # predicted_mask=pr_mask
+        # )
+        
+
+        name = pred_dir + '/' + str(i) + '.png'
+        print(name)
+        plt.savefig(name)
 
 
     # Run inference on test images and store the predictions and labels
@@ -114,8 +129,10 @@ def model_evaluation():
 
     preds_max = np.argmax(preds, 1)
     preds_max_f = preds_max.flatten()
+    # preds_f = preds.flatten()
     labels_max = np.argmax(labels, 1)
     labels_max_f = labels_max.flatten()
+    # labels_f = labels.flatten()
 
     # Construct confusion matrix and calculate classification metrics with sklearn
 
@@ -125,8 +142,17 @@ def model_evaluation():
 
     # Define function to plot confusion matrix 
 
-    classes = ['Background', 'Detached house', 'Row house', 'Multi-story block', 'Non-residential building', 'Road', 'Runway', 'Gravel pad', 'Pipeline', 'Tank']
+    # For full classification scheme
+    # classes = ['Background', 'Detached house', 'Row house', 'Multi-story block', 'Non-residential building', 'Road', 'Runway', 'Gravel pad', 'Pipeline', 'Tank']
 
+    # # For classification scheme with single building class
+    # classes = ['Background', 'Building', 'Road', 'Runway', 'Pipeline', 'Tank']
+
+    # For classification scheme with buildings and roads only
+    classes = ['Background', 'Building', 'Road', 'Storage tank']
+
+    # # For classification scheme with roads only
+    # classes = ['Background', 'Road']
 
     def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues):
         if normalize:
@@ -147,9 +173,14 @@ def model_evaluation():
         plt.tight_layout()
         plt.ylabel('True label')
         plt.xlabel('Predicted label')
-        plt.savefig(Final_Config.TEST_OUTPUT_DIR + '/confusion_matrix' + '.png', dpi = 1000, bbox_inches = "tight")
+        plt.savefig(out_dir + '/confusion_matrix' + '.png', dpi = 1000, bbox_inches = "tight")
 
 
     # Plot confusion matrix
-    plt.figure(figsize=(7, 7))
+
+    # For full classification scheme
+    # plt.figure(figsize=(10, 10))
+
+    # For classification scheme with two classes
+    plt.figure(figsize=(4, 4))
     plot_confusion_matrix(cm, classes)

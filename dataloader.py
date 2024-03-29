@@ -4,13 +4,6 @@ from torch.utils.data import Dataset as BaseDataset
 import os, numpy as np, cv2
 import tifffile as tiff
 from natsort import natsorted
-from typing import Iterator, Optional
-from operator import itemgetter
-
-from torch.utils.data import DistributedSampler
-from torch.utils.data.sampler import Sampler
-from torch.utils.data import Dataset, Sampler
-
 
 IMG_SIZE = Final_Config.SIZE
 IMG_CHANNELS = Final_Config.CHANNELS
@@ -39,7 +32,7 @@ class Dataset(BaseDataset):
         # Read in TIFF image tile
         img = tiff.imread(self.images_fps[i])
         # Extract Green, Red, NIR channels.
-        img = img[:,:,1:4]
+        img = img[:,:,0:3]
 
         # Apply minimum-maximum normalization.
         img = cv2.normalize(img, dst=None, alpha=0, beta=255,norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
@@ -59,10 +52,21 @@ class Dataset(BaseDataset):
         # Ensure image tiles are 256x256 pixels. Interpolation argument must be set to nearest-neighbor
         # to preserve ground truth.
         mask = cv2.resize(mask, (IMG_SIZE, IMG_SIZE), interpolation = cv2.INTER_NEAREST)
-        
-        # Remove white pixels
+
+        # 9 classes were used in creation of the training dataset, but I have decided to condense the classification hierarchy 
+        # to a single building superclass, tank class and road class. Therefore, the below code reassigns the values in the 
+        # NumPy array of the segmentation mask for building and road segmentation only (4 unique values)
         mask[mask==255] = 0
-        
+        mask[mask==2] = 1
+        mask[mask==3] = 1
+        mask[mask==4] = 1
+        mask[mask==5] = 2
+        mask[mask==6] = 0
+        mask[mask==7] = 0
+        mask[mask==8] = 0
+        mask[mask==9] = 3
+
+
         # One-hot encode masks for multi-class segmentation
         # (10 infrastructure classes, or 7 if we merge building classes)
         onehot_mask = tf.one_hot(mask, CLASSES, axis = 0)
@@ -98,7 +102,7 @@ class InferDataset(Dataset):
 
     def __getitem__(self, idx):
         img = self.image_tiles[idx]
-        # Extract B, G, R bands, leaving out NIR.
+        # Extract Green, Red, NIR channels.
         img = img[:, :, 1:4]
         # Apply minimum-maximum normalization.
         img = cv2.normalize(img, dst=None, alpha=0, beta=255,norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
@@ -110,6 +114,7 @@ class InferDataset(Dataset):
         out_N = cv2.equalizeHist(N)
         
         final_img = cv2.merge((out_G, out_R, out_N))
+
         # Ensure image tiles are 256x256 pixels
         image = cv2.resize(final_img, (IMG_SIZE, IMG_SIZE))
 
@@ -155,87 +160,3 @@ def get_preprocessing_test(preprocessing_fn):
         albu.Lambda(image=to_tensor),
     ]
     return albu.Compose(_transform)
-
-
-
-# # Dataset classes for multi-GPU code that has not been implemented yet
-
-# # Required class for DistributedSamplerWrapper
-# class DatasetFromSampler(Dataset):
-#     """Dataset to create indexes from `Sampler`.
-#     Args:
-#         sampler: PyTorch sampler
-#     """
-
-#     def __init__(self, sampler: Sampler):
-#         """Initialisation for DatasetFromSampler."""
-#         self.sampler = sampler
-#         self.sampler_list = None
-
-#     def __getitem__(self, index: int):
-#         """Gets element of the dataset.
-#         Args:
-#             index: index of the element in the dataset
-#         Returns:
-#             Single element by index
-#         """
-#         if self.sampler_list is None:
-#             self.sampler_list = list(self.sampler)
-#         return self.sampler_list[index]
-
-#     def __len__(self) -> int:
-#         """
-#         Returns:
-#             int: length of the dataset
-#         """
-#         return len(self.sampler)
-
-
-# # Sampler for distributed data parallel 
-# class DistributedSamplerWrapper(DistributedSampler):
-#     """
-#     Wrapper over `Sampler` for distributed training.
-#     Allows you to use any sampler in distributed mode.
-#     It is especially useful in conjunction with
-#     `torch.nn.parallel.DistributedDataParallel`. In such case, each
-#     process can pass a DistributedSamplerWrapper instance as a DataLoader
-#     sampler, and load a subset of subsampled data of the original dataset
-#     that is exclusive to it.
-#     .. note::
-#         Sampler is assumed to be of constant size.
-#     """
-
-#     def __init__(
-#         self,
-#         sampler,
-#         num_replicas: Optional[int] = None,
-#         rank: Optional[int] = None,
-#         shuffle: bool = True,
-#     ):
-#         """
-#         Args:
-#             sampler: Sampler used for subsampling
-#             num_replicas (int, optional): Number of processes participating in
-#                 distributed training
-#             rank (int, optional): Rank of the current process
-#                 within ``num_replicas``
-#             shuffle (bool, optional): If true (default),
-#                 sampler will shuffle the indices
-#         """
-#         super(DistributedSamplerWrapper, self).__init__(
-#             DatasetFromSampler(sampler),
-#             num_replicas=num_replicas,
-#             rank=rank,
-#             shuffle=shuffle,
-#         )
-#         self.sampler = sampler
-
-#     def __iter__(self) -> Iterator[int]:
-#         """Iterate over sampler.
-#         Returns:
-#             python iterator
-#         """
-#         self.dataset = DatasetFromSampler(self.sampler)
-#         indexes_of_indexes = super().__iter__()
-#         subsampler_indexes = self.dataset
-#         return iter(itemgetter(*indexes_of_indexes)(subsampler_indexes))

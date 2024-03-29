@@ -13,6 +13,14 @@ parser.add_argument("--image", required=False,
 args = parser.parse_args()
 
 image_name = args.image
+footprint_shp = Operational_Config.FOOTPRINT_DIR
+
+# Only performing clipping if an image footprint shapefile is specified in operational_config.py
+if footprint_shp is not None:
+    # Clip input satellite image based on master footprint shapefile to remove overlapping areas
+    print("Satellite image is being clipped to remove overlapping areas")
+    clip_image(image_name, footprint_shp)
+    print("Clipping complete.")
 
 # Perform tiling of input satellite image scene and infrastructure detection through model inferencing
 print("Satellite image being split and tiles are being fed to infrastructure detection model for inferencing...")
@@ -24,6 +32,11 @@ print("Tile predictions being stitched together into output raster map")
 stitch_preds(image_name, predictions, skipped_indices)
 print("Stitching complete.")
 
+# Perform morphological processing to improve road connectivity
+print("Starting morphological processing of road predictions")
+morphological_processing(image_name)
+print("Morphological processing complete.")
+
 # Georeference the stitched map
 print("Stitched map is now being georeferenced...")
 georeference(image_name)
@@ -31,7 +44,7 @@ print("Georeferencing complete.")
 
 # Polygonize the georeferenced raster map
 print("Stitched raster map is now being polygonized...")
-polygonize(image_name)
+polygonize_and_simplify(image_name)
 print("Polygonization complete.")
 
 # Delete intermediate output

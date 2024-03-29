@@ -12,7 +12,7 @@ out_directory = "%s/.out" % os.getcwd()
 mkdir_p(job_directory)
 mkdir_p(out_directory)
 
-name = Final_Config.NAME
+name = 'train_eval_' + Final_Config.NAME
 
 job_file = os.path.join(job_directory, "%s.job" % name)
 print(name)
@@ -26,7 +26,7 @@ with open(job_file,"w") as fh:
     fh.writelines("#SBATCH --partition=gpuA100x4\n") 
     fh.writelines("#SBATCH --gres=gpu:1\n")
     fh.writelines("#SBATCH --account=bbou-delta-gpu\n")
-    fh.writelines("#SBATCH --time=02:00:00\n")
+    fh.writelines("#SBATCH --time=06:00:00\n")
     fh.writelines("### GPU options ###\n")
     fh.writelines("#SBATCH --gpus-per-node=1\n")
     fh.writelines("##SBATCH --gpu-bind=verbose\n")

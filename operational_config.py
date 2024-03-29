@@ -2,27 +2,31 @@ import segmentation_models_pytorch as smp
 import torch
 import torch.nn as nn
 import albumentations as albu
+from segmentation_models_pytorch import utils
 
 
 class Operational_Config(object):
 
     # Give the configuration a distinct name related to the experiment
-    NAME = 'ResNet50-UNet++_allSites_duplicateTanks'
+    NAME = 'ResNet50-UNet++_allAugs_weighted_CE-Dice_4class'
 
     # Set paths to data
 
     ROOT_DIR = r'/scratch/bbou/eliasm1'
     WORKER_ROOT =  ROOT_DIR + r'/data/'
 
-    INPUT_SCENE_DIR = ROOT_DIR + r'/alaska_scenes/prudhoe_bay'
-    OUTPUT_DIR = ROOT_DIR + r'/inference_output'
+    INPUT_SCENE_DIR = ROOT_DIR + r'/aerials'
+    OUTPUT_DIR = ROOT_DIR + r'/inference_output/ResNet50-UNet++_AK_fullrun'
     WEIGHT_DIR = ROOT_DIR + r'/model_weights/' + NAME + '.pth'
+    CLEAN_DATA_DIR = WORKER_ROOT + r'/cleaning_data/'
+    SEGFORMER_WEIGHTS_DIR = ROOT_DIR + '/SegFormer_weights/'
+    FOOTPRINT_DIR = None
 
     # Configure model training
 
     SIZE = 256
     CHANNELS = 3
-    CLASSES = 10
+    CLASSES = 4
     ENCODER = 'resnet50'
     ENCODER_WEIGHTS = 'imagenet'
     ACTIVATION = 'softmax'
