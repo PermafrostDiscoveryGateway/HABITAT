@@ -29,7 +29,9 @@ tifffile                      2021.11.2
 natsort                       8.3.1
 opencv-python                 4.7.0.72 
 rasterio                      1.2.10
+scikit-image                  0.19.3
 geopandas                     0.10.2
+shapely                       2.0.1
 numpy                         1.19.5
 tqdm                          4.65.0
 ```
