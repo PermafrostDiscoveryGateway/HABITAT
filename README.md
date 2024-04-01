@@ -11,8 +11,9 @@ HABITAT model inferencing works in the following sequence:
 
 
 
-This diagram provides a high-level overview of the primary functions (and the scripts they belong to) that compose the HABITAT workflow:  
-![Slide1](https://github.com/eliasm56/HABITAT/assets/77365021/7ccbb40b-75c1-4bcc-b2a6-c0ca74606227)  
+This diagram provides a high-level overview of the HABITAT workflow:  
+![HABITAT_workflow](https://github.com/PermafrostDiscoveryGateway/HABITAT/assets/77365021/772f455e-19c5-4161-900c-aad2724ac732)
+
 
 ## Environment setup
 Install the following major requirements:
