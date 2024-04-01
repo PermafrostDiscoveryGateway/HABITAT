@@ -2,15 +2,6 @@
 ## Overview
 HABITAT stands for **H**igh-resolution **A**rctic **B**uilt **I**nfrastructure and **T**errain **A**nalysis **T**ool. This is a fully-automated, end-to-end geospatial deep learning pipeline designed to map Arctic built infrastructure from &lt;1 m spatial resolution Maxar satellite imagery.
 
-HABITAT model inferencing works in the following sequence:  
-(1) Take an entire satellite image and split it into smaller tiles.  
-(2) Feed the tiles to a convolutional neural network model trained for infrastructure detection.  
-(3) Through semantic segmentation, detect different types of infrastructure in each image tile and predict a segmentation mask.  
-(4) Stitch the masks back into a raster with the dimensions of the input satellite image and georeference it.  
-(5) Convert the raster into a final georeferenced output map.
-
-
-
 This diagram provides a high-level overview of the HABITAT workflow:  
 ![HABITAT_workflow](https://github.com/PermafrostDiscoveryGateway/HABITAT/assets/77365021/772f455e-19c5-4161-900c-aad2724ac732)
 
