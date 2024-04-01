@@ -142,7 +142,7 @@ python full_pipeline.py --image <IMAGE_NAME>
 ```
 
 ### Inferencing on multiple satellite images
-To automatically run HABITAT on multiple satellite image on an HPC resource, make sure you have specified in operational_config.py (1) the path that holds the input satellite images, (2) the path that will hold the output polygons maps, and (3) the path that contains the trained model weights (model weights can be found here: https://drive.google.com/drive/folders/1qJjz4ITNqoAnRLPx_wAUYX7cp8nab_IB?usp=sharing):
+To automatically run HABITAT on multiple satellite image on an HPC resource, make sure you have specified in operational_config.py (1) the path that holds the input satellite images, (2) the path that will hold the output polygons maps, and (3) the path that contains the trained model weights (model weights can be found here: https://drive.google.com/drive/folders/1wnSIv_oDZlFMHtophpVCiaKSC97uvqEQ?usp=sharing):
 ```
 class Operational_Config(object):
 
