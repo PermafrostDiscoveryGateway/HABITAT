@@ -140,24 +140,17 @@ def morphological_processing(input_img_name):
     # Apply dilation for each iteration
     for i in range(num_iterations):
         print(f"Iteration {i+1} of dilation started...")
-        road_cells = morphology.binary_dilation(road_cells, selem=disk(5))
+        dilated_road_cells = morphology.binary_dilation(road_cells, selem=disk(5))
         print(f"Iteration {i+1} of dilation completed.")
 
-    # Set dilated road cells to 0
+    # Set road cells to 0
     output_data[road_cells] = 0
 
-    print("Skeletonizing the dilated road pixels...")
-    # Skeletonize the dilated road pixels
-    skeleton = morphology.skeletonize(road_cells)
+    # Add dilated road cells to output data
+    output_data[dilated_road_cells] = 2
 
-    # # Set original road cells to 0 in order to add in road skeleton
-    # output_data[road_cells] = 0
-
-    # Add skeletonized road cells to output data
-    output_data[skeleton] = 2
-
-    print("Saving the skeletonized data to the output raster...")
-    # Save the skeletonized data to the output raster
+    print("Saving new raster data with dilated roads cells...")
+    # Save the new version of the prediction raster wtih dilated roads
     tiff.imwrite(morph_process_path, output_data.astype(image.dtype))
 
     print("Processing completed successfully.")
