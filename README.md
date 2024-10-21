@@ -25,6 +25,7 @@ geopandas                     0.10.2
 shapely                       2.0.1
 numpy                         1.19.5
 tqdm                          4.65.0
+matplotlib                    3.5.3
 ```
 
 ## How to run
