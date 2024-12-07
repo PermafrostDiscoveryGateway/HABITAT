@@ -52,54 +52,52 @@ def model_evaluation():
 
     # Create function to visualize predictions
 
+    # Function to overlay the predicted mask on top of the original image
+    def overlay_mask(image, predicted_mask):
+        # Define color mappings for each class
+        color_map = {
+            1: (255, 255, 0),  # Yellow for class 1
+            2: (0, 0, 255),  # Blue for class 2
+            3: (34, 139, 34)  # Forest Green for class 3
+        }
 
-    def visualize(**images):
-        """Plot images in one row."""
-        n = len(images)
-        plt.figure(figsize=(16, 5))
-        for i, (name, image) in enumerate(images.items()):
-            plt.subplot(1, n, i + 1)
-            plt.xticks([])
-            plt.yticks([])
-            plt.title(' '.join(name.split('_')).title())
-            plt.imshow(image)
-        plt.show()
+        # Create an empty overlay with the same shape as the input image
+        overlay = np.zeros_like(image, dtype=np.uint8)
 
+        # Map mask values to their corresponding colors
+        for class_value, color in color_map.items():
+            overlay[predicted_mask == class_value] = color
 
-    # Visualize predictions on test dataset.
+        # Convert overlay to the same format as the input image
+        overlay = overlay.astype(np.uint8)
 
+        # Blend the original image with the overlay
+        alpha = 0.5  # Transparency factor
+        blended_image = cv2.addWeighted(image, 1 - alpha, overlay, alpha, 0)
 
+        return blended_image
+
+    # Update the visualization loop to use the overlay function
     for i, id_ in tqdm(enumerate(test_dataset), total=len(test_dataset)):
-
+        # Prepare the input image for visualization
         image_vis = (test_dataset_vis[i][0]).astype(np.uint8)
-        image_vis = cv2.cvtColor(image_vis, cv2.COLOR_BGR2RGB)
-        image_vis = image_vis/255
+        image_vis = cv2.cvtColor(image_vis, cv2.COLOR_BGR2RGB) / 255.0
+
+        # Prepare ground truth and predicted masks
         image, gt_mask = test_dataset[i]
-        
         gt_mask = gt_mask.squeeze()
-        
         x_tensor = torch.from_numpy(image).to('cuda').unsqueeze(0)
         pr_mask = best_model.predict(x_tensor)
         pr_mask = (pr_mask.squeeze().cpu().numpy().round())
-
         predicted_mask = np.moveaxis(pr_mask, 0, 2)
 
-        visualize(
-        image=image_vis,
-        ground_truth_mask=np.argmax(np.moveaxis(gt_mask, 0, 2), axis=2),
-        predicted_mask=np.argmax(predicted_mask, axis=2)
-        )
+        # Overlay predicted mask on the input image
+        blended_image = overlay_mask((image_vis * 255).astype(np.uint8), np.argmax(predicted_mask, axis=2))
 
-        # visualize(
-        # image=image_vis,
-        # ground_truth_mask=gt_mask,
-        # predicted_mask=pr_mask
-        # )
-        
-
+        # Save the blended image
         name = pred_dir + '/' + str(i) + '.png'
-        print(name)
-        plt.savefig(name)
+        plt.imsave(name, blended_image)
+        print(f"Saved image with overlay: {name}")
 
 
     # Run inference on test images and store the predictions and labels
@@ -138,6 +136,10 @@ def model_evaluation():
 
     cm = confusion_matrix(labels_max_f, preds_max_f)
     report = classification_report(labels_max_f, preds_max_f)
+    iou_report = jaccard_score(labels_max_f, preds_max_f, average=None)
+    acc_report = accuracy_score(labels_max_f, preds_max_f)
+    print(iou_report)
+    print(acc_report)
     print(report)
 
     # Define function to plot confusion matrix 
@@ -149,7 +151,7 @@ def model_evaluation():
     # classes = ['Background', 'Building', 'Road', 'Runway', 'Pipeline', 'Tank']
 
     # For classification scheme with buildings and roads only
-    classes = ['Background', 'Building', 'Road', 'Storage tank']
+    classes = ['Background', 'Building', 'Road', 'Tank']
 
     # # For classification scheme with roads only
     # classes = ['Background', 'Road']
@@ -182,5 +184,5 @@ def model_evaluation():
     # plt.figure(figsize=(10, 10))
 
     # For classification scheme with two classes
-    plt.figure(figsize=(4, 4))
+    plt.figure(figsize=(3, 3))
     plot_confusion_matrix(cm, classes)

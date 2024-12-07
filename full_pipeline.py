@@ -19,17 +19,17 @@ footprint_shp = Operational_Config.FOOTPRINT_DIR
 if footprint_shp is not None:
     # Clip input satellite image based on master footprint shapefile to remove overlapping areas
     print("Satellite image is being clipped to remove overlapping areas")
-    clip_image(image_name, footprint_shp)
+    no_data_value = clip_image(image_name, footprint_shp)
     print("Clipping complete.")
 
 # Perform tiling of input satellite image scene and infrastructure detection through model inferencing
 print("Satellite image being split and tiles are being fed to infrastructure detection model for inferencing...")
-predictions, skipped_indices = infer_image(image_name)
+predictions, skipped_indices, no_data_masks = infer_image(image_name, no_data_value)
 print("Tiling and inferencing complete.")
 
 # Stitch predictions into output raster map
 print("Tile predictions being stitched together into output raster map")
-stitch_preds(image_name, predictions, skipped_indices)
+stitch_preds(image_name, predictions, skipped_indices, no_data_masks)
 print("Stitching complete.")
 
 # Perform morphological processing to improve road connectivity

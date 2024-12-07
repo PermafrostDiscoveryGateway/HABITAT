@@ -12,6 +12,8 @@ from segmentation_models_pytorch import utils
 
 def model_train():
 
+    if not os.path.exists(Final_Config.PLOT_DIR):
+        os.mkdir(Final_Config.PLOT_DIR)
 
     # Paths to folders containing training/validation images and masks
 
@@ -104,10 +106,10 @@ def model_train():
         val_acc.append(val_logs['fscore'])
 
         # Print and log loss   
-        print(train_logs['CE_Dice'])
-        print(val_logs['CE_Dice'])
-        train_loss.append(train_logs['CE_Dice'])
-        val_loss.append(val_logs['CE_Dice'])
+        print(train_logs[Final_Config.LOSS.__name__])
+        print(val_logs[Final_Config.LOSS.__name__])
+        train_loss.append(train_logs[Final_Config.LOSS.__name__])
+        val_loss.append(val_logs[Final_Config.LOSS.__name__])
         
         # do something (save model, change lr, etc.)
         if max_score < val_logs['fscore']:

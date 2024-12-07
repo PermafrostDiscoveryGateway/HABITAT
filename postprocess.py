@@ -6,7 +6,6 @@ import os
 import rasterio
 from rasterio import features
 import geopandas as gpd
-import json
 from shapely.geometry import Polygon
 from rasterio.features import shapes
 from skimage.morphology import disk
@@ -14,103 +13,181 @@ from skimage import morphology
 from shapely.geometry import shape
 from operational_config import *
 
-def stitch_preds(input_img_name, predictions, skipped_indices):
+if not os.path.exists(Operational_Config.OUTPUT_DIR):
+    os.mkdir(Operational_Config.OUTPUT_DIR)
 
+# def stitch_preds(input_img_name, predictions, skipped_indices):
+
+#     # Get filename of input image
+#     new_file_name = os.path.splitext(input_img_name)[0]
+
+#     # Path to the input GeoTIFF satellite image
+#     input_img_path = os.path.join(Operational_Config.INPUT_SCENE_DIR, input_img_name)
+#     # Path to clipped input GeoTIFF satellite image
+#     clipped_img_path = os.path.join(Operational_Config.OUTPUT_DIR,"%s_clipped.tif"%new_file_name)
+
+#     if Operational_Config.FOOTPRINT_DIR is not None:
+#         # Load the full image using tifffile
+#         image = tiff.imread(clipped_img_path)
+#     else: 
+#         image = tiff.imread(input_img_path)
+
+#     # Initialize an empty map with the same dimensions as the original satellite image
+#     final_map = np.zeros_like(image[:, :, 0])
+
+#     # Initialize a counter to keep track of the current prediction
+#     prediction_counter = 0
+
+#     #  Tile size in pixels
+#     tile_size = Operational_Config.SIZE
+
+#     # Iterate through the tiles and predictions
+#     num_rows = image.shape[0] // tile_size
+#     num_cols = image.shape[1] // tile_size
+
+#     for row in range(num_rows):
+#         for col in range(num_cols):
+#             top = row * tile_size
+#             bottom = top + tile_size
+#             left = col * tile_size
+#             right = left + tile_size
+
+#             # Check if the current tile is in the list of skipped indices
+#             if (row * num_cols + col) in skipped_indices:
+#                 continue  # Skip this tile
+
+#             # Get the prediction for the current tile
+#             prediction = predictions[prediction_counter]
+#             prediction = (prediction.squeeze().round())
+#             prediction = np.moveaxis(prediction, 0, 2)
+#             final_pred = np.argmax(prediction, axis=2)
+
+#             # The following code block that is commented out is for building boundary regularization. For now, I am commenting it out
+#             # since I have found a more superior method, which is the Regularize Building Footprints tool in ArcGIS Pro, a proprietary software. 
+#             # If you have access to ArcGIS Pro, I suggest that you run this detection pipeline, then take the output maps and run boundary regularization
+#             # on buildings there.
+            
+#             # final_pred = final_pred.astype(np.uint8)
+
+#             # # Create a new array to store the output data
+#             # output_data = final_pred.astype(np.uint8).copy()
+
+#             # # Only apply on cells with detected buildings
+#             # building_cells = final_pred == 1
+#             # building_cells = building_cells.astype(np.uint8)
+
+#             # # Denoising
+#             # ori_img = cv2.medianBlur(building_cells, 5)
+#             # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+#             # ori_img = cv2.dilate(ori_img, kernel, iterations=1)
+
+#             # # Connected component analysis
+#             # num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(ori_img, connectivity=8)
+
+#             # output_data[output_data==1] = 0
+
+#             # for i in range(1, num_labels):
+#             #     img = np.zeros_like(labels)
+#             #     index = np.where(labels==i)
+#             #     img[index] = 255
+#             #     img = np.array(img, dtype=np.uint8)
+
+#             #     regularization_contour = boundary_regularization(img).astype(np.int32)
+
+#             #     cv2.fillPoly(img=output_data, pts=[regularization_contour], color=1)
+
+#             # Place the prediction into the final map at the correct position
+#             final_map[top:bottom, left:right] = final_pred    #  output_data instead of final_pred if using the boundary regularization code
+
+#             # Increment the prediction counter
+#             prediction_counter += 1
+
+#     # Path to the new raster of stitched predictions
+#     stitched_map_path = os.path.join(Operational_Config.OUTPUT_DIR,"%s_stitched.tif"%new_file_name)
+
+#     # Save the stitched prediction raster as a GeoTIFF image
+#     tiff.imsave(stitched_map_path, final_map)
+    
+#     # Path to the new raster of stitched predictions
+#     stitched_map_path = os.path.join(Operational_Config.OUTPUT_DIR,"%s_stitched.tif"%new_file_name)
+
+#     # Save the stitched prediction raster as a GeoTIFF image
+#     tiff.imsave(stitched_map_path, final_map)
+
+def stitch_preds(input_img_name, predictions, skipped_indices, no_data_masks):
     # Get filename of input image
     new_file_name = os.path.splitext(input_img_name)[0]
 
     # Path to the input GeoTIFF satellite image
     input_img_path = os.path.join(Operational_Config.INPUT_SCENE_DIR, input_img_name)
     # Path to clipped input GeoTIFF satellite image
-    clipped_img_path = os.path.join(Operational_Config.OUTPUT_DIR,"%s_clipped.tif"%new_file_name)
+    clipped_img_path = os.path.join(Operational_Config.OUTPUT_DIR, "%s_clipped.tif" % new_file_name)
 
     if Operational_Config.FOOTPRINT_DIR is not None:
         # Load the full image using tifffile
         image = tiff.imread(clipped_img_path)
-    else: 
+    else:
         image = tiff.imread(input_img_path)
 
     # Initialize an empty map with the same dimensions as the original satellite image
-    final_map = np.zeros_like(image[:, :, 0])
+    final_map = np.zeros_like(image[:, :, 0], dtype=np.uint16)
+    count_map = np.zeros_like(image[:, :, 0], dtype=np.uint16)  # To track how many times each pixel is included
 
     # Initialize a counter to keep track of the current prediction
     prediction_counter = 0
 
-    #  Tile size in pixels
+    # Tile size in pixels
     tile_size = Operational_Config.SIZE
+    overlap = Operational_Config.OVERLAP_FACTOR  # Define your overlap factor (e.g., 0.2)
+    stride = int(tile_size * (1 - overlap))  # Calculate stride based on overlap
+
+    # Calculate the number of rows and columns considering overlap
+    num_rows = (image.shape[0] - tile_size) // stride + 1
+    num_cols = (image.shape[1] - tile_size) // stride + 1
 
     # Iterate through the tiles and predictions
-    num_rows = image.shape[0] // tile_size
-    num_cols = image.shape[1] // tile_size
-
     for row in range(num_rows):
         for col in range(num_cols):
-            top = row * tile_size
+            top = row * stride
             bottom = top + tile_size
-            left = col * tile_size
+            left = col * stride
             right = left + tile_size
 
-            # Check if the current tile is in the list of skipped indices
+            # Skip this tile if it has been skipped
             if (row * num_cols + col) in skipped_indices:
-                continue  # Skip this tile
+                continue
 
             # Get the prediction for the current tile
-            prediction = predictions[prediction_counter]
-            prediction = (prediction.squeeze().cpu().numpy().round())
-            prediction = np.moveaxis(prediction, 0, 2)
-            final_pred = np.argmax(prediction, axis=2)
+            prediction = predictions[prediction_counter].squeeze().round()
 
-            # The following code block that is commented out is for building boundary regularization. For now, I am commenting it out
-            # since I have found a more superior method, which is the Regularize Building Footprints tool in ArcGIS Pro, a proprietary software. 
-            # If you have access to ArcGIS Pro, I suggest that you run this detection pipeline, then take the output maps and run boundary regularization
-            # on buildings there.
+            # Convert the prediction to a numpy array if it's a torch tensor
+            if isinstance(prediction, torch.Tensor):
+                prediction = prediction.numpy()
+
+            prediction = np.moveaxis(prediction, 0, 2)  # Moves axis 0 to position 2
+
+            # Get the NoData mask for the current tile
+            no_data_mask_tile = no_data_masks[row * num_cols + col]
+
+            final_pred = np.argmax(prediction, axis=2).astype(np.uint16)  # Cast to uint16
+
+            no_data_mask_tile = no_data_mask_tile.squeeze()  # Ensure NoData mask is 2D
             
-            # final_pred = final_pred.astype(np.uint8)
+            # Apply NoData mask by setting the prediction at NoData pixels to 0
+            final_pred[no_data_mask_tile] = 0  # Set NoData pixels to 0
 
-            # # Create a new array to store the output data
-            # output_data = final_pred.astype(np.uint8).copy()
-
-            # # Only apply on cells with detected buildings
-            # building_cells = final_pred == 1
-            # building_cells = building_cells.astype(np.uint8)
-
-            # # Denoising
-            # ori_img = cv2.medianBlur(building_cells, 5)
-            # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-            # ori_img = cv2.dilate(ori_img, kernel, iterations=1)
-
-            # # Connected component analysis
-            # num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(ori_img, connectivity=8)
-
-            # output_data[output_data==1] = 0
-
-            # for i in range(1, num_labels):
-            #     img = np.zeros_like(labels)
-            #     index = np.where(labels==i)
-            #     img[index] = 255
-            #     img = np.array(img, dtype=np.uint8)
-
-            #     regularization_contour = boundary_regularization(img).astype(np.int32)
-
-            #     cv2.fillPoly(img=output_data, pts=[regularization_contour], color=1)
-
-            # Place the prediction into the final map at the correct position
-            final_map[top:bottom, left:right] = final_pred    #  output_data instead of final_pred if using the boundary regularization code
+            # Combine predictions into final map using the maximum value across overlaps
+            final_map[top:bottom, left:right] = np.maximum(final_map[top:bottom, left:right], final_pred)
 
             # Increment the prediction counter
             prediction_counter += 1
 
-    # Path to the new raster of stitched predictions
-    stitched_map_path = os.path.join(Operational_Config.OUTPUT_DIR,"%s_stitched.tif"%new_file_name)
+    # Save the final map without averaging
+    stitched_map_path = os.path.join(Operational_Config.OUTPUT_DIR, "%s_stitched.tif" % new_file_name)
+    tiff.imsave(stitched_map_path, final_map.astype(np.uint8))  # Ensure proper dtype for saving
 
-    # Save the stitched prediction raster as a GeoTIFF image
-    tiff.imsave(stitched_map_path, final_map)
-    
-    # Path to the new raster of stitched predictions
-    stitched_map_path = os.path.join(Operational_Config.OUTPUT_DIR,"%s_stitched.tif"%new_file_name)
 
-    # Save the stitched prediction raster as a GeoTIFF image
-    tiff.imsave(stitched_map_path, final_map)
+
 
 
 def morphological_processing(input_img_name):
@@ -196,7 +273,7 @@ def georeference(input_img_name):
 
                     # Write the data from the destination raster to the new raster
                     dst_new.write(destination_data)
-
+                    
 
 def simplify_polygon(polygon, tolerance=0.5):
     # Convert the shapely geometry to a GeoSeries
@@ -271,7 +348,7 @@ def polygonize_and_simplify(input_img_name):
     classes = [result['properties']['class'] for result in results]
 
     # # Simplify each polygon using the geopandas simplify method
-    simplified_polygons = [simplify_polygon(poly) for poly in polygons]
+    # simplified_polygons = [simplify_polygon(poly) for poly in polygons]
 
     # # Clean the data based on specified shapefile
     # cleaned_polygons = clean_predictions(simplified_polygons, classes)
@@ -281,11 +358,12 @@ def polygonize_and_simplify(input_img_name):
         source_transform = src_source.transform
 
     # Create a GeoDataFrame from the list of Shapely geometries and class values
-    infra_data = {'geometry': simplified_polygons, 'class': classes}
+    infra_data = {'geometry': polygons, 'class': classes}
     infra_polygons = gpd.GeoDataFrame(infra_data, crs=source_crs)
 
     # Save the cleaned GeoDataFrame to a Shapefile
     infra_polygons.to_file(final_shapefile_path)
+
         
 # This function will delete intermediate output (stitched raster and georeferenced stiched raster) 
 # that we don't need after the workflow is completed for one image scene
@@ -309,29 +387,8 @@ def cleanup(input_img_name):
     # Delete georeferenced raster
     os.remove(georeferenced_map_path)
 
-    # # Path to clipped raster
-    # clipped_img_path = os.path.join(Operational_Config.OUTPUT_DIR,"%s_clipped.tif"%new_file_name)
-    # # Delete clipped raster
-    # os.remove(clipped_img_path)
-
-    # # Path of simplified polygons
-    # simpli_base_path = os.path.join(Operational_Config.OUTPUT_DIR, new_file_name)
-
-    # # Delete files with various extensions
-    # extensions_to_delete = [".shp", ".shx", ".dbf", ".prj", ".cpg"]
-
-    # for extension in extensions_to_delete:
-    #     file_path = f"{simpli_base_path}_simplified{extension}"
-    #     if os.path.exists(file_path):
-    #         os.remove(file_path)
-
-    # # Delete geojson files
-
-    # # Path to geojson
-    # geojson_path = os.path.join(Operational_Config.OUTPUT_DIR, f"{new_file_name}.geojson")
-
-    # # Path to final geojson file
-    # output_geojson_path = os.path.join(Operational_Config.OUTPUT_DIR, f"{new_file_name}_final.geojson")
-    # # Delete geojson
-    # os.remove(geojson_path)
-    # os.remove(output_geojson_path)
+    if Operational_Config.FOOTPRINT_DIR is not None:
+        # Path to clipped raster
+        clipped_img_path = os.path.join(Operational_Config.OUTPUT_DIR,"%s_clipped.tif"%new_file_name)
+        # Delete clipped raster
+        os.remove(clipped_img_path)

@@ -32,7 +32,7 @@ class Dataset(BaseDataset):
         # Read in TIFF image tile
         img = tiff.imread(self.images_fps[i])
         # Extract Green, Red, NIR channels.
-        img = img[:,:,0:3]
+        img = img[:,:,1:4]
 
         # Apply minimum-maximum normalization.
         img = cv2.normalize(img, dst=None, alpha=0, beta=255,norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
@@ -44,31 +44,20 @@ class Dataset(BaseDataset):
         out_N = cv2.equalizeHist(N)
         
         final_img = cv2.merge((out_G, out_R, out_N))
-        # Ensure image tiles are 256x256 pixels
+        # Ensure image tiles are specified size
         image = cv2.resize(final_img, (IMG_SIZE, IMG_SIZE))
         
         # Read in TIFF mask tile
         mask = tiff.imread(self.masks_fps[i])
-        # Ensure image tiles are 256x256 pixels. Interpolation argument must be set to nearest-neighbor
+        # Ensure mask tiles are specified size pixels. Interpolation argument must be set to nearest-neighbor
         # to preserve ground truth.
         mask = cv2.resize(mask, (IMG_SIZE, IMG_SIZE), interpolation = cv2.INTER_NEAREST)
 
-        # 9 classes were used in creation of the training dataset, but I have decided to condense the classification hierarchy 
-        # to a single building superclass, tank class and road class. Therefore, the below code reassigns the values in the 
-        # NumPy array of the segmentation mask for building and road segmentation only (4 unique values)
-        mask[mask==255] = 0
-        mask[mask==2] = 1
+        # Below code can be used to reclassify the training data if one wishes
+        # mask[mask==255] = 0
         mask[mask==3] = 1
-        mask[mask==4] = 1
-        mask[mask==5] = 2
-        mask[mask==6] = 0
-        mask[mask==7] = 0
-        mask[mask==8] = 0
-        mask[mask==9] = 3
-
 
         # One-hot encode masks for multi-class segmentation
-        # (10 infrastructure classes, or 7 if we merge building classes)
         onehot_mask = tf.one_hot(mask, CLASSES, axis = 0)
         mask = np.stack(onehot_mask, axis=-1).astype('float')
       
@@ -113,11 +102,8 @@ class InferDataset(Dataset):
         out_R = cv2.equalizeHist(R)
         out_N = cv2.equalizeHist(N)
         
-        final_img = cv2.merge((out_G, out_R, out_N))
-
-        # Ensure image tiles are 256x256 pixels
-        image = cv2.resize(final_img, (IMG_SIZE, IMG_SIZE))
-
+        image = cv2.merge((out_G, out_R, out_N))
+        
         # Apply preprocessing
         if self.preprocessing:
             sample = self.preprocessing(image=image)

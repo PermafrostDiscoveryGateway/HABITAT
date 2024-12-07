@@ -8,25 +8,25 @@ from segmentation_models_pytorch import utils
 class Operational_Config(object):
 
     # Give the configuration a distinct name related to the experiment
-    NAME = 'ResNet50-UNet++_allAugs_weighted_CE-Dice_4class'
+    NAME = 'ResNet50-UNet++_512_0.5FTL_0.90A_0.75G_0.5CE_3class'
 
     # Set paths to data
 
-    ROOT_DIR = r'/scratch/bbou/eliasm1'
+    ROOT_DIR = r'/scratch/08968/eliasm1/HABITAT'
     WORKER_ROOT =  ROOT_DIR + r'/data/'
 
-    INPUT_SCENE_DIR = ROOT_DIR + r'/aerials'
-    OUTPUT_DIR = ROOT_DIR + r'/inference_output/ResNet50-UNet++_AK_fullrun'
+    INPUT_SCENE_DIR = WORKER_ROOT + r'/russia_scenes'
+    OUTPUT_DIR = ROOT_DIR + r'/inference_output/' + NAME + r'/russia'
     WEIGHT_DIR = ROOT_DIR + r'/model_weights/' + NAME + '.pth'
     CLEAN_DATA_DIR = WORKER_ROOT + r'/cleaning_data/'
-    SEGFORMER_WEIGHTS_DIR = ROOT_DIR + '/SegFormer_weights/'
-    FOOTPRINT_DIR = None
+    FOOTPRINT_DIR = WORKER_ROOT + r'/footprints/' + 'russia_pansh_proj_fp.shp'
 
-    # Configure model training
+    # Configure model
 
-    SIZE = 256
+    SIZE = 512
+    OVERLAP_FACTOR = 0.5
     CHANNELS = 3
-    CLASSES = 4
+    CLASSES = 3
     ENCODER = 'resnet50'
     ENCODER_WEIGHTS = 'imagenet'
     ACTIVATION = 'softmax'
@@ -50,9 +50,4 @@ class Operational_Config(object):
     VAL_BATCH_SIZE = 1
     EPOCHS = 80
 
-    # Select augmentations
-    AUGMENTATIONS = [albu.Transpose(p=0.6),
-                     albu.RandomRotate90(p=0.6),
-                     albu.HorizontalFlip(p=0.6),
-                     albu.VerticalFlip(p=0.6)]
 

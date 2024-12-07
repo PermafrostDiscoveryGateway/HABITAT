@@ -1,34 +1,31 @@
 import segmentation_models_pytorch as smp
 import torch
-import torch.nn as nn
 import albumentations as albu
 from segmentation_models_pytorch import utils
-from focaldiceloss import FocalDiceLoss
-from CE_DiceLoss import CEDiceLoss
+from FTL import *
 
 class Final_Config(object):
 
     # Give the configuration a distinct name related to the experiment
-    NAME = 'ResNet50-UNet++_allAugs_weighted_CE-Dice_4class'
+    NAME = 'ResNet101-UNet++_512_NO_FBANK_0.75CE_0.25dice_3class_80epochs'
 
     # Set paths to data
 
-    ROOT_DIR = r'/scratch/bbou/eliasm1'
-    # ROOT_DIR = r'D:/infra-master'
+    ROOT_DIR = r'/scratch/08968/eliasm1/HABITAT'
     WORKER_ROOT =  ROOT_DIR + r'/data/'
 
-    INPUT_IMG_DIR = WORKER_ROOT + r'/256x256/imgs'
-    INPUT_MASK_DIR = WORKER_ROOT + r'/256x256/masks'
-    TEST_OUTPUT_DIR = ROOT_DIR + r'/test_output'
+    INPUT_IMG_DIR = WORKER_ROOT + r'/512x512/imgs'
+    INPUT_MASK_DIR = WORKER_ROOT + r'/512x512/masks'
+    TEST_OUTPUT_DIR = ROOT_DIR + r'/test_output/'
     PLOT_DIR = ROOT_DIR + r'/plots/' + NAME 
     WEIGHT_DIR = ROOT_DIR + r'/model_weights/' + NAME
 
     # Configure model training
 
-    SIZE = 256
+    SIZE = 512
     CHANNELS = 3
-    CLASSES = 4
-    ENCODER = 'resnet50'
+    CLASSES = 3
+    ENCODER = 'resnet101'
     ENCODER_WEIGHTS = 'imagenet'
     ACTIVATION = 'softmax'
 
@@ -41,19 +38,9 @@ class Final_Config(object):
                              classes=CLASSES,
                              activation=ACTIVATION)
 
-    # Use Focal loss
-    # LOSS = smp.losses.FocalLoss(mode='multilabel')
-    # LOSS.__name__ = 'FocalLoss'
-
-    # Use combined Focal-Dice Loss
-    # FOCAL_DICE_LOSS = FocalDiceLoss(focal_weight=0.75, dice_weight=0.25)
-    # FOCAL_DICE_LOSS.__name__ = 'FocalDiceLoss'
-
-    # LOSS = FOCAL_DICE_LOSS
-
-    # Use CE-Dice Loss
-    LOSS = CEDiceLoss()
-    LOSS.__name__ = 'CE_Dice'
+    # Use Cross-entropy Focal Tverksy loss
+    LOSS = FocalTverskyLoss(alpha=0.99, gamma=0.25, weight_ce=1, weight_tversky=0.5)
+    LOSS.__name__ = 'FTL'
 
     METRICS = [utils.metrics.Fscore(threshold=0.5)]
     OPTIMIZER = torch.optim.Adam([dict(params=MODEL.parameters(), lr=0.0001)])
@@ -76,4 +63,5 @@ class Final_Config(object):
                      albu.RandomBrightnessContrast(p=0.30),
                      albu.RandomGamma(p=0.15)
                     ] 
+
 
