@@ -50,24 +50,21 @@ def process_shapefiles(input_dir, output_dir_buildings, output_dir_roads, start_
             # Calculate Area
             arcpy.CalculateGeometryAttributes_management("temp_layer", [["Area", "AREA"]])
 
-            # Filter out features with area ≤ 10
-            print(f"Filtering features with area ≤ 10 for {shapefile}...")
+            # Select and delete features with area <= 10
+            print(f"Deleting features with area <= 10 for {shapefile}...")
             arcpy.management.SelectLayerByAttribute("temp_layer", "NEW_SELECTION", 'Area <= 10')
-
-            # Create a new layer without small features
-            filtered_layer = "filtered_layer"
-            arcpy.management.MakeFeatureLayer("temp_layer", filtered_layer)
+            arcpy.management.DeleteFeatures("temp_layer")
 
             # Split by class = 1 and class = 2
             print(f"Splitting features by class for {shapefile}...")
             class1_layer = "class1_layer"
             class2_layer = "class2_layer"
 
-            arcpy.SelectLayerByAttribute_management(filtered_layer, "NEW_SELECTION", 'class = 1')
-            arcpy.MakeFeatureLayer_management(filtered_layer, class1_layer)
+            arcpy.SelectLayerByAttribute_management("temp_layer", "NEW_SELECTION", 'class = 1')
+            arcpy.MakeFeatureLayer_management("temp_layer", class1_layer)
 
-            arcpy.SelectLayerByAttribute_management(filtered_layer, "NEW_SELECTION", 'class = 2')
-            arcpy.MakeFeatureLayer_management(filtered_layer, class2_layer)
+            arcpy.SelectLayerByAttribute_management("temp_layer", "NEW_SELECTION", 'class = 2')
+            arcpy.MakeFeatureLayer_management("temp_layer", class2_layer)
 
             # Process class = 1 (buildings) with Regularize Building Footprints
             print(f"Regularizing building footprints for {shapefile}...")
@@ -89,10 +86,10 @@ def process_shapefiles(input_dir, output_dir_buildings, output_dir_roads, start_
 
             print(f"Saved filtered buildings to {building_output}.")
 
-            # Process class = 2 (roads) with Polygon to Centerline
-            print(f"Generating centerlines for roads in {shapefile}...")
-            road_output = os.path.join(output_dir_roads, shapefile)
-            arcpy.cartography.CollapseHydroPolygon(class2_layer, road_output)
+            # # Process class = 2 (roads) with Polygon to Centerline
+            # print(f"Generating centerlines for roads in {shapefile}...")
+            # road_output = os.path.join(output_dir_roads, shapefile)
+            # arcpy.cartography.CollapseHydroPolygon(class2_layer, road_output)
 
             # Clean up temporary layers
             print(f"Cleaning up temporary layers...")
