@@ -89,10 +89,10 @@ def process_shapefiles(input_dir, output_dir_buildings, output_dir_roads, start_
 
             print(f"Saved filtered buildings to {building_output}.")
 
-            # # Process class = 2 (roads) with Polygon to Centerline
-            # print(f"Generating centerlines for roads in {shapefile}...")
-            # road_output = os.path.join(output_dir_roads, shapefile)
-            # arcpy.cartography.CollapseHydroPolygon(class2_layer, road_output)
+            # Process class = 2 (roads) with Polygon to Centerline
+            print(f"Generating centerlines for roads in {shapefile}...")
+            road_output = os.path.join(output_dir_roads, shapefile)
+            arcpy.cartography.CollapseHydroPolygon(class2_layer, road_output)
 
             # Clean up temporary layers
             print(f"Cleaning up temporary layers...")
