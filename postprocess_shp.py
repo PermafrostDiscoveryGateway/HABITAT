@@ -47,13 +47,13 @@ def process_shapefiles(input_dir, output_dir_buildings, output_dir_roads, start_
             # Calculate Area
             arcpy.CalculateGeometryAttributes_management("temp_layer", [["Area", "AREA"]])
 
-            # Select and delete features with area <= 10
-            print(f"Deleting features with area <= 10 for {shapefile}...")
+            # Select and delete features with area below threshold
+            print(f"Deleting features below area threshold for {shapefile}...")
             arcpy.management.SelectLayerByAttribute("temp_layer", "NEW_SELECTION", 'Area <= 10')
             arcpy.management.DeleteFeatures("temp_layer")
 
             # Calculating WIDTH of input features on the Width field
-            print(f"Deleting features with width <= 2 for {shapefile}...")
+            print(f"Deleting features below width threshold for {shapefile}...")
             arcpy.topographic.CalculateMetrics("temp_layer", 'WIDTH', in_width_attributes='Width')
             arcpy.management.SelectLayerByAttribute("temp_layer", "NEW_SELECTION", 'Width <= 4')
             arcpy.management.DeleteFeatures("temp_layer")
